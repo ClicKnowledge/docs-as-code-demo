@@ -11,22 +11,29 @@ This page is for the people who maintain these docs. It explains how a change go
 Every page on this site is a text file in the [GitHub repository](https://github.com/ClicKnowledge/docs-as-code-demo). Nobody edits the live site directly. Changes go through the same steps every time.
 
 ```mermaid
-flowchart LR
-    A[Edit files<br/>on a branch] --> B[Open a<br/>pull request]
-    B --> C[Automated checks<br/>GitHub Actions]
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#E8F1F8', 'primaryBorderColor': '#1F5F8B', 'primaryTextColor': '#0F2A3D', 'lineColor': '#1F5F8B', 'fontSize': '16px'}}}%%
+flowchart TD
+    A[Edit files on a branch] --> B[Open a pull request]
+    B --> C[Automated checks<br/>in GitHub Actions]
     C -- fail --> A
-    C -- pass --> D[Human review<br/>and approval]
+    C -- pass --> D[Human review and approval]
     D -- changes requested --> A
     D -- approved --> E[Merge to main]
-    E --> F[Mintlify publishes<br/>the live site]
+    E --> F[Mintlify publishes the live site]
 ```
 
-1. **Edit on a branch.** A branch is a private copy of the docs. Work there never affects the live site.
-2. **Open a pull request.** This proposes the change and shows exactly what changed, line by line.
-3. **Automated checks run.** GitHub Actions runs the checks listed below. A failed check blocks the merge.
-4. **A person reviews.** The reviewer uses the checklist in the pull request template.
-5. **Merge.** Merging to the `main` branch is the only way content goes live.
-6. **Mintlify publishes.** The Mintlify GitHub App sees the merge and rebuilds the site within a few minutes.
+1. **Edit on a branch**<br />
+   A branch is a private copy of the docs. Work there never affects the live site.
+2. **Open a pull request**<br />
+   This proposes the change and shows exactly what changed, line by line.
+3. **Automated checks run**<br />
+   GitHub Actions runs the checks listed below. A failed check blocks the merge.
+4. **A person reviews**<br />
+   The reviewer uses the checklist in the pull request template.
+5. **Merge**<br />
+   Merging to the `main` branch is the only way content goes live.
+6. **Mintlify publishes**<br />
+   The Mintlify GitHub App sees the merge and rebuilds the site within a few minutes.
 
 ## Automated checks
 
@@ -37,7 +44,7 @@ The checks are defined in `.github/workflows/docs-checks.yml` and run on every p
 | Site validation | `mint validate` | Pages that will not build, navigation entries with no file, broken OpenAPI pages |
 | OpenAPI validation | `mint openapi-check` | Errors in `api-reference/openapi.yaml` |
 | Broken links | `mint broken-links` | Links between pages that point nowhere |
-| Terminology | `python scripts/check_terminology.py` | Words that break the terminology standard |
+| Terminology | `check_terminology.py` | Words that break the terminology standard |
 
 <Note>
   Mintlify offers built-in checks on its paid plans. This site runs the same Mintlify command-line tool inside GitHub Actions instead, which works on any plan and keeps the rules in the repository where they can be reviewed.
@@ -61,9 +68,12 @@ The checks are defined in `.github/workflows/docs-checks.yml` and run on every p
 
 ## Version control
 
-- **Every change is recorded.** Git keeps the full history of every file: who changed it, when and why. Any change can be undone by reverting its pull request.
-- **The API spec has its own version.** The `info.version` field in `openapi.yaml` follows semantic versioning: patch for wording fixes, minor for new endpoints or fields, major for breaking changes.
-- **API versions live in the path.** A breaking change means a new path (`/v2`) and a new navigation group, while `/v1` docs stay published until `/v1` retires.
+- **Every change is recorded**<br />
+  Git keeps the full history of every file: who changed it, when and why. Any change can be undone by reverting its pull request.
+- **The API spec has its own version**<br />
+  The `info.version` field in `openapi.yaml` follows semantic versioning: patch for wording fixes, minor for new endpoints or fields, major for breaking changes.
+- **API versions live in the path**<br />
+  A breaking change means a new path (`/v2`) and a new navigation group, while `/v1` docs stay published until `/v1` retires.
 
 ## How to make common changes
 

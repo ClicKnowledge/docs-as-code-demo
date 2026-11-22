@@ -8,18 +8,19 @@ Brightweir Triage sits between your help desk and your support agents. It reads 
 ## How a ticket flows
 
 ```mermaid
-flowchart LR
-    A[Help desk<br/>new ticket] --> B[Triage API]
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#E8F1F8', 'primaryBorderColor': '#1F5F8B', 'primaryTextColor': '#0F2A3D', 'lineColor': '#1F5F8B', 'fontSize': '16px'}}}%%
+flowchart TD
+    A[New ticket in your help desk] --> B[Triage API]
     B --> C[Classifier]
-    C --> D{Confidence<br/>at or above<br/>threshold?}
+    C --> D{Confidence at or<br/>above threshold?}
     D -- Yes --> E[Route to team queue]
-    D -- No --> F[Review queue<br/>a person checks it]
+    D -- No --> F[Review queue:<br/>a person checks it]
     F --> E
     E --> G[Reply drafter]
     G --> H[Agent approves,<br/>edits or rejects]
     H --> I[Reply sent from<br/>your help desk]
     H -. corrections .-> J[Feedback store]
-    J -. evaluates .-> C
+    J -. evaluates new models .-> C
 ```
 
 ## Components

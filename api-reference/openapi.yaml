@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Brightweir Triage API
-  version: 1.2.0
+  version: 1.2.1
   summary: Classify support tickets and draft replies for agent review.
   description: |
     The Brightweir Triage API reads an incoming support ticket and returns a
@@ -189,10 +189,12 @@ paths:
                 properties:
                   feedback_id:
                     type: string
+                    description: Brightweir's ID for this correction.
                     example: fbk_9Lx0Qe
                   status:
                     type: string
                     enum: [accepted]
+                    description: Always `accepted`. Corrections are reviewed later, not applied immediately.
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -286,6 +288,7 @@ components:
         created_at:
           type: string
           format: date-time
+          description: When the ticket was classified, in UTC.
 
     Urgency:
       type: string
@@ -299,11 +302,13 @@ components:
           type: string
           enum: [neutral, friendly, formal]
           default: neutral
+          description: The voice of the draft. Match it to your brand.
         max_words:
           type: integer
           minimum: 30
           maximum: 400
           default: 150
+          description: The longest the draft can be, in words.
 
     Draft:
       type: object
@@ -311,8 +316,10 @@ components:
       properties:
         draft_id:
           type: string
+          description: Brightweir's ID for this draft. Send it with feedback when an agent edits the draft.
         ticket_id:
           type: string
+          description: The ticket this draft replies to.
         text:
           type: string
           description: The draft reply. An agent must approve it before it is sent.
@@ -320,6 +327,7 @@ components:
           type: number
           minimum: 0
           maximum: 1
+          description: How sure the model is that the draft answers the ticket correctly, from 0 to 1.
         status:
           type: string
           enum: [pending_review]
@@ -337,6 +345,7 @@ components:
                 format: uri
         model:
           type: string
+          description: The model that wrote this draft.
 
     Model:
       type: object
@@ -344,12 +353,15 @@ components:
       properties:
         id:
           type: string
+          description: The model ID to send in the `model` field.
         status:
           type: string
           enum: [preview, stable, deprecated]
+          description: '`preview` is for testing only, `stable` is for production and `deprecated` stops working on the `retires` date.'
         released:
           type: string
           format: date
+          description: The date the model became available.
         retires:
           type: [string, 'null']
           format: date
@@ -361,12 +373,14 @@ components:
       properties:
         ticket_id:
           type: string
+          description: The ticket the correction applies to.
         draft_id:
           type: string
           description: Required when `field` is `draft`.
         field:
           type: string
           enum: [category, urgency, draft]
+          description: What the agent corrected.
         corrected_value:
           type: string
           description: The correct category ID, urgency level or edited draft text.

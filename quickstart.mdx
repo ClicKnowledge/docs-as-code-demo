@@ -20,11 +20,12 @@ You need:
 ## Classify your first ticket
 
 <Steps>
-  <Step title="Store your API key">
-    Save your key as an environment variable so it stays out of your code.
+  <Step title="Store your API key and server address">
+    Save both as environment variables so your key stays out of your code and you can switch servers in one place.
 
     ```bash
     export BRIGHTWEIR_API_KEY="your-api-key"
+    export BRIGHTWEIR_URL="https://sandbox.brightweir.example/v1"
     ```
   </Step>
   <Step title="Send a ticket">
@@ -32,13 +33,13 @@ You need:
 
     <CodeGroup>
     ```bash curl
-    curl https://sandbox.brightweir.example/v1/tickets/classify \
+    curl "$BRIGHTWEIR_URL/tickets/classify" \
       -H "Authorization: Bearer $BRIGHTWEIR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "ticket": {
           "subject": "Charged twice for my March invoice",
-          "body": "My card was charged twice for invoice INV-2291. Can you refund one?",
+          "body": "Charged twice for INV-2291. Please refund one.",
           "channel": "email"
         },
         "model": "triage-2026-09"
@@ -49,13 +50,16 @@ You need:
     import os
     import requests
 
+    url = os.environ["BRIGHTWEIR_URL"] + "/tickets/classify"
+    key = os.environ["BRIGHTWEIR_API_KEY"]
+
     response = requests.post(
-        "https://sandbox.brightweir.example/v1/tickets/classify",
-        headers={"Authorization": f"Bearer {os.environ['BRIGHTWEIR_API_KEY']}"},
+        url,
+        headers={"Authorization": f"Bearer {key}"},
         json={
             "ticket": {
                 "subject": "Charged twice for my March invoice",
-                "body": "My card was charged twice for invoice INV-2291. Can you refund one?",
+                "body": "Charged twice for INV-2291. Please refund one.",
                 "channel": "email",
             },
             "model": "triage-2026-09",
@@ -71,7 +75,10 @@ You need:
     ```json
     {
       "ticket_id": "tkt_7Hq2mR",
-      "category": { "id": "billing.duplicate_charge", "label": "Billing - duplicate charge" },
+      "category": {
+        "id": "billing.duplicate_charge",
+        "label": "Billing - duplicate charge"
+      },
       "urgency": "high",
       "confidence": 0.93,
       "needs_review": false,
@@ -91,7 +98,7 @@ You need:
     Use the `ticket_id` to ask for a draft reply.
 
     ```bash
-    curl https://sandbox.brightweir.example/v1/tickets/tkt_7Hq2mR/draft-reply \
+    curl "$BRIGHTWEIR_URL/tickets/tkt_7Hq2mR/draft-reply" \
       -H "Authorization: Bearer $BRIGHTWEIR_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{ "tone": "friendly", "max_words": 120 }'
@@ -103,10 +110,14 @@ You need:
     When an agent changes a category, an urgency level or a draft, send the correction to the feedback endpoint. Brightweir uses corrections to evaluate future models.
 
     ```bash
-    curl https://sandbox.brightweir.example/v1/feedback \
+    curl "$BRIGHTWEIR_URL/feedback" \
       -H "Authorization: Bearer $BRIGHTWEIR_API_KEY" \
       -H "Content-Type: application/json" \
-      -d '{ "ticket_id": "tkt_7Hq2mR", "field": "urgency", "corrected_value": "normal" }'
+      -d '{
+        "ticket_id": "tkt_7Hq2mR",
+        "field": "urgency",
+        "corrected_value": "normal"
+      }'
     ```
   </Step>
 </Steps>
