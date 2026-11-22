@@ -1,0 +1,48 @@
+# Automated checks for the documentation.
+# Runs on every pull request and on every push to main.
+# If any step fails, the pull request shows a red X and should not be merged.
+
+name: Docs checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the files
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js (for the Mintlify tool)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install the Mintlify command-line tool
+        # Pinned to a tested version so a Mintlify update cannot break the checks by surprise.
+        run: npm install --global mint@4.3.79
+
+      - name: Validate the OpenAPI spec
+        run: mint openapi-check api-reference/openapi.yaml
+
+      - name: Validate the whole site (pages, navigation, generated API pages)
+        run: mint validate
+
+      - name: Check for broken links
+        run: mint broken-links
+
+      - name: Set up Python (for the terminology check)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check terminology
+        run: |
+          pip install pyyaml
+          python scripts/check_terminology.py

@@ -1,0 +1,434 @@
+openapi: 3.1.0
+info:
+  title: Brightweir Triage API
+  version: 1.2.1
+  summary: Classify support tickets and draft replies for agent review.
+  description: |
+    The Brightweir Triage API reads an incoming support ticket and returns a
+    category, an urgency level and a confidence score. It can also draft a
+    reply that a support agent reviews before anything is sent to a customer.
+
+    Brightweir Labs is a fictional company. This specification exists to
+    demonstrate a docs-as-code pipeline.
+  contact:
+    name: Brightweir developer support
+    email: developers@brightweir.example
+servers:
+  - url: https://api.brightweir.example
+    description: Production
+  - url: https://sandbox.brightweir.example
+    description: Sandbox (free, rate-limited, synthetic models)
+security:
+  - apiKey: []
+tags:
+  - name: Tickets
+    description: Classify tickets and draft replies.
+  - name: Models
+    description: See which classification models are available.
+  - name: Feedback
+    description: Send agent corrections back to improve future results.
+
+paths:
+  /v1/tickets/classify:
+    post:
+      tags: [Tickets]
+      operationId: classifyTicket
+      summary: Classify a ticket
+      description: |
+        Returns a category, an urgency level and a confidence score for one
+        ticket. If the confidence score is below your workspace threshold
+        (0.80 by default), `needs_review` is `true` and the ticket should go to
+        a person before it is routed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClassifyRequest'
+            example:
+              ticket:
+                external_id: HD-48213
+                subject: Charged twice for my March invoice
+                body: Hi, my card was charged twice for invoice INV-2291. Can you refund one of them?
+                channel: email
+                language: en
+              model: triage-2026-09
+      responses:
+        '200':
+          description: The ticket was classified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classification'
+              example:
+                ticket_id: tkt_7Hq2mR
+                category:
+                  id: billing.duplicate_charge
+                  label: Billing - duplicate charge
+                urgency: high
+                confidence: 0.93
+                needs_review: false
+                model: triage-2026-09
+                created_at: '2026-11-20T15:04:11Z'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /v1/tickets/{ticket_id}/draft-reply:
+    post:
+      tags: [Tickets]
+      operationId: draftReply
+      summary: Draft a reply
+      description: |
+        Writes a draft reply for a ticket you have already classified. Every
+        draft is returned with the status `pending_review`. The API never sends
+        a reply to a customer; an agent approves, edits or rejects it in your
+        help desk.
+      parameters:
+        - $ref: '#/components/parameters/TicketId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DraftRequest'
+            example:
+              tone: friendly
+              max_words: 120
+      responses:
+        '200':
+          description: A draft reply was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Draft'
+              example:
+                draft_id: drf_31KpZa
+                ticket_id: tkt_7Hq2mR
+                text: Thanks for flagging this. I can see two charges for invoice INV-2291, and I have started a refund for the duplicate. It should appear on your card within 5 to 10 business days.
+                confidence: 0.88
+                status: pending_review
+                sources:
+                  - title: Refund policy
+                    url: https://help.example.com/refunds
+                model: triage-2026-09
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /v1/models:
+    get:
+      tags: [Models]
+      operationId: listModels
+      summary: List models
+      description: |
+        Lists the classification models your workspace can use, with their
+        status and retirement dates. Pin a model in production so results do
+        not change when a new model is released.
+      responses:
+        '200':
+          description: The list of models.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Model'
+              example:
+                data:
+                  - id: triage-2026-09
+                    status: stable
+                    released: '2026-09-15'
+                    retires: null
+                  - id: triage-2026-03
+                    status: deprecated
+                    released: '2026-03-02'
+                    retires: '2027-03-01'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/feedback:
+    post:
+      tags: [Feedback]
+      operationId: sendFeedback
+      summary: Send feedback
+      description: |
+        Records an agent's correction to a category, an urgency level or a
+        draft reply. Corrections are reviewed by Brightweir and used to
+        evaluate future models. They do not change the model your workspace
+        is using.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+            example:
+              ticket_id: tkt_7Hq2mR
+              field: urgency
+              corrected_value: normal
+              agent_id: agent_204
+      responses:
+        '202':
+          description: The feedback was accepted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [feedback_id, status]
+                properties:
+                  feedback_id:
+                    type: string
+                    description: Brightweir's ID for this correction.
+                    example: fbk_9Lx0Qe
+                  status:
+                    type: string
+                    enum: [accepted]
+                    description: Always `accepted`. Corrections are reviewed later, not applied immediately.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    apiKey:
+      type: http
+      scheme: bearer
+      description: |
+        Send your API key in the `Authorization` header as
+        `Bearer <your-api-key>`. Create and revoke keys in the Brightweir
+        console under **Settings > API keys**.
+
+  parameters:
+    TicketId:
+      name: ticket_id
+      in: path
+      required: true
+      description: The `ticket_id` returned when the ticket was classified.
+      schema:
+        type: string
+        example: tkt_7Hq2mR
+
+  schemas:
+    ClassifyRequest:
+      type: object
+      required: [ticket]
+      properties:
+        ticket:
+          $ref: '#/components/schemas/TicketInput'
+        model:
+          type: string
+          description: The model to use. Defaults to the newest stable model. Pin a model in production.
+          example: triage-2026-09
+
+    TicketInput:
+      type: object
+      required: [subject, body, channel]
+      properties:
+        external_id:
+          type: string
+          description: The ticket's ID in your help desk, returned unchanged so you can match results.
+          example: HD-48213
+        subject:
+          type: string
+          maxLength: 500
+        body:
+          type: string
+          maxLength: 20000
+          description: The customer's message as plain text.
+        channel:
+          type: string
+          enum: [email, chat, web_form]
+        language:
+          type: string
+          description: ISO 639-1 language code. Detected automatically if you leave it out.
+          example: en
+
+    Classification:
+      type: object
+      required: [ticket_id, category, urgency, confidence, needs_review, model, created_at]
+      properties:
+        ticket_id:
+          type: string
+          description: Brightweir's ID for this ticket. Use it to draft a reply or send feedback.
+        category:
+          type: object
+          required: [id, label]
+          properties:
+            id:
+              type: string
+              description: Stable category ID from your workspace taxonomy.
+            label:
+              type: string
+              description: Human-readable category name.
+        urgency:
+          $ref: '#/components/schemas/Urgency'
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: How sure the model is about the category, from 0 to 1.
+        needs_review:
+          type: boolean
+          description: '`true` when `confidence` is below your workspace threshold.'
+        model:
+          type: string
+          description: The model that produced this result.
+        created_at:
+          type: string
+          format: date-time
+          description: When the ticket was classified, in UTC.
+
+    Urgency:
+      type: string
+      enum: [low, normal, high, critical]
+      description: How quickly the ticket needs a response.
+
+    DraftRequest:
+      type: object
+      properties:
+        tone:
+          type: string
+          enum: [neutral, friendly, formal]
+          default: neutral
+          description: The voice of the draft. Match it to your brand.
+        max_words:
+          type: integer
+          minimum: 30
+          maximum: 400
+          default: 150
+          description: The longest the draft can be, in words.
+
+    Draft:
+      type: object
+      required: [draft_id, ticket_id, text, confidence, status, model]
+      properties:
+        draft_id:
+          type: string
+          description: Brightweir's ID for this draft. Send it with feedback when an agent edits the draft.
+        ticket_id:
+          type: string
+          description: The ticket this draft replies to.
+        text:
+          type: string
+          description: The draft reply. An agent must approve it before it is sent.
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: How sure the model is that the draft answers the ticket correctly, from 0 to 1.
+        status:
+          type: string
+          enum: [pending_review]
+          description: Always `pending_review`. The API never sends replies.
+        sources:
+          type: array
+          description: Knowledge-base articles the draft relied on.
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              url:
+                type: string
+                format: uri
+        model:
+          type: string
+          description: The model that wrote this draft.
+
+    Model:
+      type: object
+      required: [id, status, released]
+      properties:
+        id:
+          type: string
+          description: The model ID to send in the `model` field.
+        status:
+          type: string
+          enum: [preview, stable, deprecated]
+          description: '`preview` is for testing only, `stable` is for production and `deprecated` stops working on the `retires` date.'
+        released:
+          type: string
+          format: date
+          description: The date the model became available.
+        retires:
+          type: [string, 'null']
+          format: date
+          description: The date the model stops accepting requests, or `null` if no date is set.
+
+    FeedbackRequest:
+      type: object
+      required: [ticket_id, field, corrected_value]
+      properties:
+        ticket_id:
+          type: string
+          description: The ticket the correction applies to.
+        draft_id:
+          type: string
+          description: Required when `field` is `draft`.
+        field:
+          type: string
+          enum: [category, urgency, draft]
+          description: What the agent corrected.
+        corrected_value:
+          type: string
+          description: The correct category ID, urgency level or edited draft text.
+        agent_id:
+          type: string
+          description: Your ID for the agent who made the correction.
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              example: invalid_request
+            message:
+              type: string
+              example: The field "ticket.body" is required.
+
+  responses:
+    BadRequest:
+      description: The request is missing a required field or has an invalid value.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: The API key is missing, invalid or revoked.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: No ticket with that ID exists in your workspace.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests. Wait for the number of seconds in the `Retry-After` header, then try again.
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

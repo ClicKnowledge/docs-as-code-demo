@@ -5,3 +5,9 @@
 # Draft content
 drafts/
 *.draft.mdx
+
+# Repository tooling (not published)
+templates/
+standards/
+scripts/
+AGENTS.md

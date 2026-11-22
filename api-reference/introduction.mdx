@@ -1,0 +1,53 @@
+---
+title: "API reference"
+sidebarTitle: "Overview"
+description: "Authentication, servers, versions and errors for the Brightweir Triage API."
+---
+
+<Info>
+  The endpoint pages in this section are generated automatically from [`openapi.yaml`](https://github.com/ClicKnowledge/docs-as-code-demo/blob/main/api-reference/openapi.yaml). Change the spec, and the pages change with it. This introduction is written and reviewed by a person.
+</Info>
+
+## Servers
+
+- **Sandbox**<br />
+  `https://sandbox.brightweir.example`<br />
+  For building and testing. Free, rate-limited and uses synthetic models.
+- **Production**<br />
+  `https://api.brightweir.example`<br />
+  For live tickets.
+
+## Authentication
+
+Send your API key in the `Authorization` header on every request:
+
+```http
+Authorization: Bearer your-api-key
+```
+
+Create and revoke keys in the Brightweir console under **Settings > API keys**. Keep keys on your server. Never put them in a browser or mobile app.
+
+## Versions
+
+- **API version** is in the path (`/v1`). Breaking changes get a new path, and `/v1` stays available for at least 12 months after `/v2` is released.
+- **Model version** is a request field (`model`). Pin it in production. Use **List models** to see status and retirement dates.
+
+## Errors
+
+Every error returns the same shape:
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "The field \"ticket.body\" is required."
+  }
+}
+```
+
+| Status | Meaning | What to do |
+| --- | --- | --- |
+| `400` | A field is missing or has an invalid value. | Fix the request using the `message`. |
+| `401` | The API key is missing, invalid or revoked. | Check the `Authorization` header. |
+| `404` | No ticket with that ID exists in your workspace. | Check the `ticket_id`. |
+| `429` | Too many requests. | Wait for the seconds in the `Retry-After` header, then retry. |

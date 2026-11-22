@@ -1,0 +1,41 @@
+# Brightweir terminology standard
+#
+# Each entry names the approved term ("use") and the words it replaces ("avoid").
+# scripts/check_terminology.py reads this file and fails the pull request if any
+# published page uses an "avoid" word. Matching ignores capitals and skips code.
+#
+# To change the standard, edit this file and open a pull request.
+
+terms:
+  - use: ticket
+    avoid: [support case]
+    why: One name for one thing, matching the API.
+
+  - use: draft reply
+    avoid: [suggested response, auto-reply, autoreply, canned response]
+    why: The API never sends replies. "Auto-reply" suggests it does.
+
+  - use: confidence score
+    avoid: [certainty score, probability score]
+    why: Matches the confidence field in the API.
+
+  - use: agent
+    avoid: [rep, reps, CSR, CSRs]
+    why: The term our customers use for their support staff.
+
+  - use: API key
+    avoid: [API token, access token]
+    why: Matches the console and the Authorization header docs.
+
+  - use: help desk
+    avoid: [helpdesk]
+    why: One spelling everywhere.
+
+  - use: email
+    avoid: [e-mail]
+    why: House style.
+
+  # Words that add nothing and can make readers feel slow.
+  - use: (delete the word)
+    avoid: [simply, obviously]
+    why: If it were simple, the reader would not need the docs.

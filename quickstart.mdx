@@ -1,47 +1,134 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "Classify your first support ticket and draft a reply in about 10 minutes."
 ---
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+Brightweir Triage reads a support ticket and tells you what it is about, how urgent it is and how sure it is. It can also draft a reply for an agent to review. This guide takes you from an API key to your first classified ticket and draft reply.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+## Before you begin
 
-## Prerequisites
+You need:
 
-Before you begin, you must have:
+- A Brightweir workspace. The sandbox is free and uses synthetic models.
+- An API key from the Brightweir console, under **Settings > API keys**.
+- A terminal with `curl`, or Python 3.9 or later.
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+<Note>
+  The examples use the sandbox server, `https://sandbox.brightweir.example`. Switch to `https://api.brightweir.example` when you go live.
+</Note>
 
-## Get started
+## Classify your first ticket
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+  <Step title="Store your API key and server address">
+    Save both as environment variables so your key stays out of your code and you can switch servers in one place.
 
     ```bash
-    npm install your-package
+    export BRIGHTWEIR_API_KEY="your-api-key"
+    export BRIGHTWEIR_URL="https://sandbox.brightweir.example/v1"
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+  <Step title="Send a ticket">
+    Send the ticket's subject, body and channel to the classify endpoint.
 
-    ```bash
-    your-cli init
+    <CodeGroup>
+    ```bash curl
+    curl "$BRIGHTWEIR_URL/tickets/classify" \
+      -H "Authorization: Bearer $BRIGHTWEIR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "ticket": {
+          "subject": "Charged twice for my March invoice",
+          "body": "Charged twice for INV-2291. Please refund one.",
+          "channel": "email"
+        },
+        "model": "triage-2026-09"
+      }'
     ```
+
+    ```python Python
+    import os
+    import requests
+
+    url = os.environ["BRIGHTWEIR_URL"] + "/tickets/classify"
+    key = os.environ["BRIGHTWEIR_API_KEY"]
+
+    response = requests.post(
+        url,
+        headers={"Authorization": f"Bearer {key}"},
+        json={
+            "ticket": {
+                "subject": "Charged twice for my March invoice",
+                "body": "Charged twice for INV-2291. Please refund one.",
+                "channel": "email",
+            },
+            "model": "triage-2026-09",
+        },
+    )
+    print(response.json())
+    ```
+    </CodeGroup>
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+  <Step title="Read the result">
+    The response tells you where the ticket should go and whether a person should check it first.
+
+    ```json
+    {
+      "ticket_id": "tkt_7Hq2mR",
+      "category": {
+        "id": "billing.duplicate_charge",
+        "label": "Billing - duplicate charge"
+      },
+      "urgency": "high",
+      "confidence": 0.93,
+      "needs_review": false,
+      "model": "triage-2026-09",
+      "created_at": "2026-11-20T15:04:11Z"
+    }
+    ```
+
+    | Field | What it means |
+    | --- | --- |
+    | `category` | The topic of the ticket, from your workspace's category list. |
+    | `urgency` | `low`, `normal`, `high` or `critical`. |
+    | `confidence` | How sure the model is about the category, from 0 to 1. |
+    | `needs_review` | `true` when the confidence score is below your threshold (0.80 by default). Send these tickets to a person. |
+  </Step>
+  <Step title="Draft a reply">
+    Use the `ticket_id` to ask for a draft reply.
 
     ```bash
-    your-cli start
+    curl "$BRIGHTWEIR_URL/tickets/tkt_7Hq2mR/draft-reply" \
+      -H "Authorization: Bearer $BRIGHTWEIR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "tone": "friendly", "max_words": 120 }'
+    ```
+
+    Every draft comes back with the status `pending_review`. The API never sends a reply to a customer. An agent approves, edits or rejects the draft in your help desk.
+  </Step>
+  <Step title="Send corrections">
+    When an agent changes a category, an urgency level or a draft, send the correction to the feedback endpoint. Brightweir uses corrections to evaluate future models.
+
+    ```bash
+    curl "$BRIGHTWEIR_URL/feedback" \
+      -H "Authorization: Bearer $BRIGHTWEIR_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "ticket_id": "tkt_7Hq2mR",
+        "field": "urgency",
+        "corrected_value": "normal"
+      }'
     ```
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## Next steps
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+<CardGroup cols={2}>
+  <Card title="How Brightweir Triage works" icon="sitemap" href="/architecture">
+    See each step a ticket goes through and where people stay in control.
+  </Card>
+  <Card title="API reference" icon="code" href="/api-reference/introduction">
+    Every endpoint, field and error, generated from the OpenAPI spec.
+  </Card>
+</CardGroup>
