@@ -1,72 +1,64 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Brightweir Triage",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1F5F8B",
+    "light": "#5FA8D3",
+    "dark": "#17496B"
   },
   "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
+  "banner": {
+    "content": "Demo site: Brightweir Labs is a fictional company. Built by Jason Helfenbaum ([ClicKnowledge](https://clicknowledge.com)) to show a docs-as-code pipeline.",
+    "dismissible": true
+  },
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get started",
+        "pages": ["quickstart", "architecture"]
+      },
+      {
+        "group": "API reference",
+        "openapi": "api-reference/openapi.yaml",
+        "pages": [
+          "api-reference/introduction",
+          "POST /v1/tickets/classify",
+          "POST /v1/tickets/{ticket_id}/draft-reply",
+          "GET /v1/models",
+          "POST /v1/feedback"
+        ]
+      },
+      {
+        "group": "Product",
+        "pages": ["datasheet"]
+      },
+      {
+        "group": "Docs operations",
+        "pages": ["runbook"]
+      }
+    ]
+  },
+  "api": {
+    "playground": {
+      "display": "simple"
+    }
+  },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:support@mintlify.com"
+        "label": "Source on GitHub",
+        "href": "https://github.com/ClicKnowledge/docs-as-code-demo"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
     ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "github": "https://github.com/ClicKnowledge/docs-as-code-demo"
     }
   }
 }

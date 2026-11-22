@@ -1,55 +1,31 @@
-# Mintlify Starter Kit
+# Brightweir Triage documentation (docs-as-code demo)
 
-Use the starter kit to get your docs deployed and ready to customize.
+A working docs-as-code pipeline: Markdown pages in Git, automated checks in GitHub Actions, API reference generated from an OpenAPI spec, and publishing through Mintlify.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+**Brightweir Labs and Brightweir Triage are fictional.** This repository was built by Jason Helfenbaum ([ClicKnowledge](https://clicknowledge.com)) as a demonstration.
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+## What is where
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+| Path | What it is |
+| --- | --- |
+| `docs.json` | Site settings and navigation |
+| `*.mdx` | Pages written by a person |
+| `api-reference/openapi.yaml` | The API spec. Mintlify generates the endpoint pages from it. |
+| `standards/terminology.yml` | Approved terms, enforced by the terminology check |
+| `scripts/check_terminology.py` | The terminology check |
+| `templates/` | Starting points for new pages (not published) |
+| `.github/workflows/docs-checks.yml` | Automated checks on every pull request |
+| `.github/pull_request_template.md` | Reviewer checklist |
 
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+## Preview on your computer
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the guides for [Claude Code](https://www.mintlify.com/docs/guides/claude-code), [Codex](https://www.mintlify.com/docs/guides/codex), [Cursor](https://www.mintlify.com/docs/guides/cursor), and [Devin Desktop](https://www.mintlify.com/docs/guides/devin-desktop) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
-npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
+npm install --global mint
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+Then open http://localhost:3000.
 
-## Publishing changes
+## How changes go live
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
-
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+Branch, open a pull request, let the checks pass, get one approval, merge to `main`. Mintlify publishes the merge automatically. The full process is in the **Runbook and review policy** page.
